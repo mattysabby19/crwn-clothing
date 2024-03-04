@@ -1,12 +1,13 @@
-import { FirebaseApp, initializeApp } from "firebase/app";
+import { initializeApp } from "firebase/app";
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
+  createUserWithEmailAndPassword,
 } from "firebase/auth";
 
-import {getFirestore, doc, setDoc, getDoc} from 'firebase/firestore'
+import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBheaNHS3p4PtqAwnL8kdLALP9y0R_3oY4",
@@ -24,26 +25,35 @@ provider.setCustomParameters({
 });
 
 export const auth = getAuth();
-export const signInWithGooglePopup = () => signInWithPopup(auth,provider);
+export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
 export const db = getFirestore();
-export const createUserDocumentFromAuth = async (userAuth) => {
-    const userDocRef = doc(db,"users", userAuth.uid);
-    const userSnapshot = await getDoc(userDocRef);
-    if(!userSnapshot.exists())
-    {
-        const{ displayName, email } = userAuth;
-        const createdAt = new Date();
-        try{
-            await setDoc(userDocRef, { displayName, email, createdAt})
-
-        }catch(ex)
-        {
-            console.log('error creating the user',ex.message);
-
-        }
-
-    }else{
-        return userDocRef;
+export const createUserDocumentFromAuth = async (userAuth, additionalData) => {
+  const userDocRef = doc(db, "users", userAuth.uid);
+  const userSnapshot = await getDoc(userDocRef);
+  if (!userSnapshot.exists()) {
+    const { displayName, email } = userAuth;
+    const createdAt = new Date();
+    try {
+      await setDoc(userDocRef, {
+        displayName,
+        email,
+        createdAt,
+        ...additionalData,
+      });
+    } catch (ex) {
+      console.log("error creating the user", ex.message);
     }
-    console.log(userSnapshot);
-}
+  } else {
+    return userDocRef;
+  }
+  console.log(userSnapshot);
+};
+
+export const signInWithGoogleRedirect = () => {
+  signInWithRedirect(auth, provider);
+};
+export const createAuthUserWithEmailAndPassword = async (email, password) => {
+  if (!email || !password) return;
+  console.log(email, password);
+  return await createUserWithEmailAndPassword(auth, email, password);
+};
